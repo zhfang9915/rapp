@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.RouterDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 根据设备号获取设备信息 -->
+	<select id="queryRouterByDevNo" resultType="org.rapp.pojo.entry.Router">
+		select * from t_rapp_router where dev_no=#{devNo}
+		<if test="state != null and state != ''">  
+	       and state = #{state}
+	    </if> 
+	</select>
+	
+	<!-- 根据Mac查询已注册的设备信息 -->
+	<select id="queryRouterByMac" resultType="org.rapp.pojo.entry.Router">
+		select * from t_rapp_router where mac=#{mac} and dev_no is not null
+	</select>
+ 	
+ 	<!-- 插入设备 -->
+ 	<insert id="insertRouter">
+ 		insert ignore t_rapp_router(dev_no,dev_name,mac,channel_id,fw_id,select_city,address,install_address,lng,lat,remark,create_time,create_by,state) 
+ 		values (#{devNo},#{devName},#{mac},#{channelId},#{fwId},#{selectCity},#{address},#{installAddress},#{lng},#{lat},#{remark},now(),#{createBy},2);
+ 	</insert>
+ 	
+ 	<!-- 查询条件 -->
+ 	<sql id="queryRouterCondition">
+ 		<where>
+ 			r.fw_id=f.fw_id
+			<if test="devNo != null and devNo != ''">  
+		       and r.dev_no = #{devNo}
+		    </if> 
+		    <if test="devName != null and devName != ''">  
+		       and r.dev_name like CONCAT('%',#{devName},'%')
+		    </if>   
+			<if test="mac != null and mac != ''">  
+		       and r.mac = #{mac}
+		    </if>  
+			<if test="channelId != null and channelId != ''">  
+		       and r.channel_id = #{channelId}
+		    </if>
+			<if test="channelId =='nobinding'">  
+		       and r.channel_id is null
+		    </if>
+			<if test="fwId != null and fwId != ''">  
+		       and r.fw_id = #{fwId}
+		    </if>
+			<if test="state != null and state != ''">  
+		       and r.state = #{state}
+		    </if>
+			<if test="createBy != null and createBy != ''">  
+		       and r.create_by = #{createBy}
+		    </if>
+	    </where>  
+	</sql>
+	
+ 	<!-- 查询设备并在表格上展示 -->
+ 	<select id="queryRouter4Table" resultType="org.rapp.pojo.entry.Router">
+ 		select r.*,
+ 			c.channel_id 'channel.channelId',
+ 			c.channel_name_ch 'channel.channelNameCh',
+ 			c.channel_name_ch 'channel.channelNameEn',
+ 			c.state 'channel.state',
+ 			f.fw_name 'fw.fwName',
+ 			f.version 'fw.version',
+ 			f.openwrt 'fw.openwrt',
+ 			f.crossstool 'fw.crossstool'
+		from (t_rapp_router r,t_rapp_firmware f)
+		left join t_rapp_channel c on r.channel_id=c.channel_id
+ 		<include refid="queryRouterCondition"/>
+		order by r.create_time desc
+		<if test="offset != null and offset != ''">  
+			limit ${offset},${limit}
+		</if>
+ 	</select>
+ 	<!-- 查询设备总数 -->
+ 	<select id="queryRouter4TableCount" resultType="int">
+ 		select count(0)
+		from (t_rapp_router r,t_rapp_firmware f)
+		left join t_rapp_channel c on r.channel_id=c.channel_id
+ 		<include refid="queryRouterCondition"/>
+ 	</select>
+ 	
+<!--  	<select id="queryRouterById" resultType="org.rapp.pojo.entry.Router"> -->
+<!--  		select r.*,c.channel_name_ch 'channel.channelnamech',f.fw_name 'fw.fwname'  -->
+<!-- 		from (t_rapp_router r,t_rapp_firmware f) -->
+<!-- 		left join t_rapp_channel c on r.channel_id=c.channel_id -->
+<!--  		where r.fw_id=f.fw_id and r.dev_no=#{devNo} -->
+<!--  	</select> -->
+
+	<!-- 根据MAC地址更新设备编码 -->
+	<update id="updateRouterByMac">
+		update t_rapp_router set dev_no=#{devNo} where mac=#{mac}
+	</update>
+	
+	<!-- 删除设备 -->
+	<delete id="deleteRouterByMac">
+		delete from t_rapp_router where 1=1
+		<if test="createBy != null and createBy != ''">  
+	       and create_by = #{createBy}
+	    </if>
+		and mac in 
+		<foreach collection="routers" item="r" index="index" open="(" close=")" separator=",">
+            #{r.mac}
+        </foreach>
+	</delete>
+	<delete id="deleteRouterByNo">
+		delete from t_rapp_router where create_by=#{createBy} and dev_no=#{devNo}
+	</delete>
+	
+	<!-- 更新设备的所属渠道 -->
+	<update id="updateRouterChannel">
+		update t_rapp_router set channel_id=#{channelId} where mac in
+		<foreach collection="routers" item="r" index="index" open="(" close=")" separator=",">
+            #{r.mac}
+        </foreach>
+	</update>
+	<update id="updateRouterChannelByNo">
+		update t_rapp_router set channel_id=#{channelId} where dev_no=#{devNo}
+	</update>
+	
+	<!-- 接触绑定 -->
+	<update id="removeRouterChannel">
+		update t_rapp_router set channel_id='' where channel_id=#{channelId} and dev_no in
+		<foreach collection="routers" item="r" index="index" open="(" close=")" separator=",">
+            #{r.devNo}
+        </foreach>
+	</update>
+	
+	
+	<!-- 更新设备的地址信息 -->
+	<update id="updateRouterAddress">
+		update t_rapp_router set dev_name=#{devName},install_address=#{installAddress} where dev_no=#{devNo}
+	</update>
+	
+	<update id="updateRouterFirmware">
+		update t_rapp_router set fw_id=#{fwId} where mac=#{mac}
+	</update>
+	
+	<!-- 查询未绑定渠道的设备信息 -->
+ 	<select id="queryFreeRouter" resultType="org.rapp.pojo.entry.Router">
+ 		select r.*
+ 		from t_rapp_router r	
+		where (r.channel_id is null or r.channel_id='')
+		<if test="createBy != null and createBy != ''">  
+			and r.create_by=#{createBy}
+		</if>
+		<if test="devName != null and devName != ''">  
+	       and r.dev_name like CONCAT('%',#{devName},'%')
+	    </if>   
+		<if test="offset != null and offset != ''">  
+			limit ${offset},${limit}
+		</if>
+ 	</select>
+ 	<select id="queryFreeRouterCount" resultType="int">
+ 		select count(0)
+ 		from t_rapp_router r	
+		where (r.channel_id is null or r.channel_id='')
+		<if test="createBy != null and createBy != ''">  
+			and r.create_by=#{createBy}
+		</if>
+		<if test="devName != null and devName != ''">  
+	       and r.dev_name like CONCAT('%',#{devName},'%')
+	    </if>   
+ 	</select>
+ 	
+ 	<!-- 查询用户名下的设备 -->
+ 	<select id="queryUserRouterCount" resultType="int">
+ 		select count(0)
+ 		from t_rapp_router 
+		<if test="createBy != null and createBy != ''">  
+			where create_by=#{createBy}
+		</if>
+ 	</select>
+ 	<!-- 查询用户名下激活的设备 -->
+ 	<select id="queryActiceRouterCount" resultType="int">
+ 		select count(0)
+ 		from t_rapp_router where state = 2
+		<if test="createBy != null and createBy != ''">  
+			and create_by=#{createBy}
+		</if>
+ 	</select>
+ 	
+</mapper>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>email</title>
+		<style type="text/css">
+			body{
+				font-family: "微软雅黑";
+				font-size: 14px;
+				padding: 0;
+				margin: 0;
+			}
+			h2,p,img{
+				padding: 0;
+				margin: 0;
+				border: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="email-content" style="margin: 5px auto; width: 90%; padding: 5%; overflow: hidden; ">
+			<div class="logo"><a href="http://www.qcwifi.ltd"><img width="120" src="http://www.qcwifi.ltd/img/login/qclogo3.png"/></a></div>
+		
+			<div class="content" style="width:100%; padding:20px;">
+				<p class="caption" style="line-height: 24px;">尊敬的前辰用户：</p>
+				<p class="intro" style="text-indent: 2em; line-height: 24px;">您好！感谢您注册前辰无线运营云平台。</p>
+				<p class="intro" style="text-indent: 2em; line-height: 24px;">您的登录用户名为 <strong style="color:#d87832;">$!{er.username}</strong> ，为了让你能体验平台更丰富的功能，请点击以下链接激活您的账户。</p>				
+				<p class="intro" style="text-indent: 2em; line-height: 24px;">若以下链接无发点击，请复制下面链接在浏览器中打开激活您的账号</p>
+				<p class="signature" style="line-height: 28px;word-wrap:break-word; word-break:normal;"><a href="$!{er.activeUrl}">$!{er.activeUrl}</a></p>
+				<br/><br/><br/><br/>
+			</div>
+			<br/><br/><br/><br/>
+			<div class="footer" style="width: 90%; background: #f5f5f5; position: absolute; bottom: 0; left: 0; padding: 5%;">
+					
+				<p style="line-height: 24px;text-align: center;"><span>前辰科技:</span><a href="http://www.qcwifi.ltd">www.qcwifi.ltd</a></p>
+				<p class="statement" style="padding-top: 10px; line-height: 24px;text-align: center;">系统邮件请不要回复哦，感谢您对前辰科技的信任与支持!</p>
+			</div>
+		</div>
+	</body>
+</html>

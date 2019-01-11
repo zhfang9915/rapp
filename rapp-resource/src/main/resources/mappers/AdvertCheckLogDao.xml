@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.AdvertCheckLogDao">
+	
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 插入广告审核日志(消息) -->
+	<insert id="insertCheckLog">
+		insert into t_rapp_advert_check_log
+			(
+				advert_id,
+				have_read,
+				title,
+				msg,
+				create_by,
+				reviewer,
+				create_time
+			) 
+		values 
+			(
+				#{advertId},
+				1,
+				#{title},
+				#{msg},
+				#{createBy},
+				#{reviewer},
+				now()
+			)
+ 	</insert>
+ 	
+	<!-- 查询当前用户的未读审核消息 -->
+ 	<select id="queryUnreadCount" resultType="int">
+ 		select count(0)
+		from t_rapp_advert_check_log
+		where have_read=1 and create_by=#{createBy}
+ 	</select>
+ 	
+ 	<!-- 更新广告配置信息 -->
+ 	<update id="updateReadState">
+ 		update t_rapp_advert_check_log
+ 		set have_read=2
+		where have_read=1 and id in
+		<foreach collection="logs" item="log" index="index" open="(" close=")" separator=",">
+			#{log.id}
+        </foreach>
+			
+ 	</update>
+ 	
+ 	<!-- 查询未读的广告审核信息 -->
+ 	<select id="queryUnreadCheckLog" resultType="org.rapp.pojo.log.AdvertCheckLog">
+ 		select * from t_rapp_advert_check_log
+ 		where have_read=1 and reviewer=#{reviewer}
+ 	</select>
+ 	
+	
+</mapper>

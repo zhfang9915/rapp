@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.AdvertDao">
+	
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 广告信息查询基础SQL -->
+	<sql id="advertSQL">
+		SELECT
+			a.*
+		FROM
+			t_rapp_advert a
+		WHERE
+			1=1
+	</sql>
+	
+	<!-- 广告实体Map -->
+	<resultMap id="advertMap" type="org.rapp.pojo.entry.Advert">
+ 		<!-- 广告信息 -->
+		<id column="advert_id" property="advertId" />
+		<result column="advert_name" property="advertName" />
+		<result column="state" property="state" />
+		<result column="off_time" property="offTime" />
+		<result column="weight" property="weight" />
+		<result column="remark" property="remark" />
+		<result column="create_by" property="createBy" />
+		<result column="create_time" property="createTime" />
+		<!-- 模板信息 -->
+		<association 
+			property="temp" 
+			column="temp_id" 
+			javaType="org.rapp.pojo.entry.AdvertTemp" 
+			select="org.rapp.repository.AdvertTempDao.selectAdvertTempById"/>
+		<!-- 广告信息 -->
+		<collection 
+			property="items" 
+			javaType="ArrayList" 
+			column="advert_id" 
+			ofType="org.rapp.pojo.entry.AdvertItem" 
+			select="selectAdvertItemsById"/>
+		<!-- 渠道信息 -->
+		<collection 
+			property="channels" 
+			javaType="ArrayList" 
+			column="advert_id" 
+			ofType="org.rapp.pojo.entry.Channel" 
+			select="org.rapp.repository.ChannelDao.selectChannelByAdvertId"/>
+	</resultMap>
+	
+	<select id="getUUID" resultType="String" >
+		select uuid() from dual
+	</select>
+	
+	<!-- 配置广告 -->
+	<insert id="insertAdvert">
+		insert into t_rapp_advert
+			(
+				advert_id,
+				advert_name,
+				off_time,
+				state,
+				temp_id,
+				weight,
+				remark,
+				create_by,
+				create_time
+			) 
+		values 
+			(
+				#{advertId},
+				#{advertName},
+				<if test="offTime == ''">
+					null,
+				</if>
+				<if test="offTime != ''">
+					#{offTime},
+				</if>
+				1,
+				#{temp.tempId},
+				#{weight},
+				#{remark},
+				#{createBy},
+				now()
+			)
+ 	</insert>
+ 	
+ 	<insert id="insertAdvertItem">
+ 		insert into t_rapp_advert_item(advert_id, advert_url, to_url, local_url)
+ 		values
+ 		<foreach collection="items" item="item" index="index" open="" close="" separator=",">
+			(#{item.advertId}, #{item.advertUrl}, #{item.toUrl}, #{item.localUrl})
+        </foreach>
+ 	</insert>
+ 	
+ 	<insert id="insertAdvertChannel">
+ 		insert into t_rapp_advert_channel(advert_id, channel_id)
+ 		values
+ 		<foreach collection="channels" item="c" index="index" open="" close="" separator=",">
+			(#{advertId},#{c})
+        </foreach>
+ 	</insert>
+ 	
+ 	<sql id="queryAdvertsCondition">
+		<if test="advertId != null and advertId != ''">  
+	       and a.advert_id = #{advertId}
+	    </if>  
+		<if test="advertName != null and advertName != ''">  
+	       and a.advert_name = #{advertName}
+	    </if>  
+		<if test="state != null and state != ''">  
+	       and a.state = #{state}
+	    </if>
+		<if test="createBy != null and createBy != ''">  
+	       and a.create_by = #{createBy}
+	    </if>
+	</sql>
+	
+	<!-- 广告表格查询 -->
+ 	<select id="tableAdverts" resultMap="advertMap" >
+ 		<include refid="advertSQL"/>
+		<include refid="queryAdvertsCondition"/>
+		order by a.create_time desc
+		<if test="offset != null and offset != ''">  
+			limit ${offset},${limit}
+	    </if>
+ 	</select>
+ 	
+	<!-- 广告表格查询总数 -->
+ 	<select id="tableAdvertsCount" resultType="int">
+ 		select count(0)
+		from t_rapp_advert a
+		where 1=1
+		<include refid="queryAdvertsCondition"/>
+ 	</select>
+ 	
+ 	<select id="selectAdvertItemsById" parameterType="string" resultType="org.rapp.pojo.entry.AdvertItem" >
+ 		select * from t_rapp_advert_item where advert_id=#{advertId}
+ 	</select>
+	
+ 	<!-- 广告列表查询 -->
+ 	<select id="listAdverts" resultMap="advertMap">
+ 		<include refid="advertSQL"/>
+		<include refid="queryAdvertsCondition"/>
+		order by a.create_time desc
+ 	</select>
+ 	
+ 	
+ 	<!-- 删除或批量删除广告配置信息 -->
+ 	<delete id="deleteAdvert">
+ 		delete from t_rapp_advert where advert_id in
+ 		<foreach collection="adverts" item="a" index="index" open="(" close=")" separator=",">
+			#{a.advertId}
+        </foreach>
+ 	</delete>
+ 	<!-- 删除或批量删除广告配置明细信息 -->
+ 	<delete id="deleteAdvertItem">
+ 		delete from t_rapp_advert_item where advert_id in
+ 		<foreach collection="adverts" item="a" index="index" open="(" close=")" separator=",">
+			#{a.advertId}
+        </foreach>
+ 	</delete>
+ 	
+ 	<!-- 删除广告渠道信息 -->
+ 	<delete id="deleteAdvertChannel">
+ 		delete from t_rapp_advert_channel where advert_id=#{advertId} and channel_id in
+ 		<foreach collection="channelIds" item="channelId" index="index" open="(" close=")" separator=",">
+			#{channelId}
+        </foreach>
+ 	</delete>
+ 	
+ 	<!-- 根据广告ID 删除广告渠道信息 -->
+ 	<delete id="deleteAdvertChannelByAdvertId">
+ 		delete from t_rapp_advert_channel where advert_id in
+ 		<foreach collection="adverts" item="a" index="index" open="(" close=")" separator=",">
+			#{a.advertId}
+        </foreach>
+ 	</delete>
+ 	
+ 	<!-- 更新广告配置信息 -->
+ 	<update id="updateAdvert">
+ 		update t_rapp_advert
+ 		set advert_name=#{advertName},
+ 			off_time=#{offTime},
+			state=#{state},
+			weight=#{weight},
+			remark=#{remark}
+		where advert_id=#{advertId}
+ 	</update>
+ 	
+ 	<!-- 根据广告ID获取广告所属的渠道IDs -->
+ 	<select id="queryAdvertChannelIds" resultType="string">
+ 		select channel_id from t_rapp_advert_channel 
+		where advert_id=#{advertId}
+ 	</select>
+ 	
+ 	
+ 	<!-- 根据广告ID获取广告 -->
+ 	<select id="queryAdvertById" resultMap="advertMap">
+ 		<include refid="advertSQL"/>
+		AND a.advert_id=#{advertId}
+		<if test="createBy != null and createBy != ''">  
+	       and a.create_by = #{createBy}
+	    </if>
+ 	</select>
+ 	
+ 	<!-- 查询名下已有的广告总数 -->
+ 	<select id="totalAdvertExist" resultType="int">
+ 		select count(0) from t_rapp_advert
+		where create_by=#{createBy}
+ 	</select>
+ 	
+ 	<!-- 更新广告状态 -->
+ 	<update id="updateState">
+ 		update t_rapp_advert set state=#{state}
+ 		where advert_id=#{advertId}
+ 	</update>
+ 	
+ 	<!-- 推送广告 -->
+ 	<select id="queryAdvertsByChannelId" resultMap="advertMap">
+		select a.* from t_rapp_advert a,t_rapp_advert_channel c
+		where a.advert_id=c.advert_id 
+		AND a.state = 4
+		AND c.channel_id = #{channelId}
+		<![CDATA[ 
+			AND (DATE_FORMAT(#{nowDate}, '%Y-%m-%d') < DATE_FORMAT(a.off_time, '%Y-%m-%d') or a.off_time is NULL)
+		]]>
+ 	</select>
+ 	
+ 	<select id="queryUserAdvertsCount" resultType="int">
+ 		select count(0)
+		from t_rapp_advert
+		<if test="createBy != null and createBy != ''">  
+			where create_by=#{createBy}
+		</if>
+ 	</select>
+ 	
+</mapper>

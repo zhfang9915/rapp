@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.JSCodeDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 查询JS源码列表的条件sql -->
+	<sql id="queryJSCodesCondition">
+		<where>
+			1=1
+			<if test="codeId != null and codeId != ''">  
+		       and code_id=#{codeId}
+		    </if>  
+			<if test="codeName != null and codeName != ''">  
+		       and code_name like CONCAT('%',#{codeName},'%')
+		    </if>  
+		</where>
+	</sql>
+	<!-- 根据分页查询JS源码列表 -->
+	<select id="listJSCodes" resultType="org.rapp.pojo.entry.JSCode">
+		select * from t_rapp_js
+		<include refid="queryJSCodesCondition"/>
+		order by create_time desc
+		<if test="offset != null and offset != ''">  
+			limit ${offset},${limit}
+	    </if> 
+	</select>
+	
+	<!-- 根据分页查询JS源码列表总数 -->
+	<select id="countJSCodes" resultType="int">
+		select count(0) from t_rapp_js
+		<include refid="queryJSCodesCondition"/>
+	</select>
+	
+	<!-- 根据ID查询JS源码 -->
+	<select id="queryJSCodeById" resultType="org.rapp.pojo.entry.JSCode">
+		select * from t_rapp_js where code_id = #{codeId}
+	</select>
+	
+	<!-- 根据ID查询JS源码 -->
+	<select id="queryJSCodeAll" resultType="org.rapp.pojo.entry.JSCode">
+		select * from t_rapp_js
+	</select>
+	
+	<!-- 新增JS源码 -->
+	<insert id="insertJSCode">
+		<selectKey keyProperty="codeId" resultType="String" order="BEFORE">
+            select uuid() from dual
+        </selectKey>
+		insert ignore into t_rapp_js(code_id, code_name, is_default, code, server_ip, server_port, remark, create_time)
+		values(#{codeId}, #{codeName}, #{isDefault}, #{code}, #{serverIp}, #{serverPort}, #{remark}, #{createTime})
+	</insert>
+	
+	<!-- 删除JS源码 -->
+	<delete id="deleteJSCode">
+		delete from t_rapp_js where code_id in 
+		<foreach collection="list" item="c" index="index" open="(" close=")" separator=",">
+            #{c.codeId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新JS源码 -->
+	<update id="updateJSCode">
+		update t_rapp_js 
+		set code_name=#{codeName},code=#{code},
+			is_default=#{isDefault},
+			server_ip=#{serverIp},server_port=#{serverPort},remark=#{remark}
+		where code_id=#{codeId}
+	</update>
+	
+	<!-- 查询默认的JS模版 -->
+	<select id="defaultJsCode" resultType="org.rapp.pojo.entry.JSCode">
+		select * from t_rapp_js where is_default = 1
+	</select>
+	
+	<!-- 取消默认 -->
+	<update id="cancelDefault">
+		update t_rapp_js 
+		set is_default=0
+		where code_id=#{codeId}
+	</update>
+	
+	<!-- 根据渠道ID获取JS模版 -->
+ 	<select id="getJscodeByChannelId" resultType="org.rapp.pojo.entry.JSCode">
+		select j.* from t_rapp_channel c,t_rapp_js j
+		where c.code_id=j.code_id and c.channel_id=#{channelId}
+ 	</select>
+	
+</mapper>

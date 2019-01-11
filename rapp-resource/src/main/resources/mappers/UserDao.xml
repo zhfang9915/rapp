@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.UserDao">
+	
+	<cache type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+
+	<sql id="queryCondition">
+		<where>
+			u.role_id = r.role_id
+			<if test="username != null and username != ''">  
+		       and u.username = #{username}
+		    </if>  
+			<if test="state != null and state != ''">  
+		       and u.state = ${state}
+		    </if>  
+			<if test="roleId != null and roleId != ''">  
+		       and u.role_id = ${roleId}
+		    </if>  
+		</where>
+	</sql>
+	
+	<select id="queryAllUsers" resultType="org.rapp.pojo.account.User">
+		select u.username,
+			u.state,
+			u.role_id,
+			u.email,
+			u.create_time,
+			r.role_id as 'role.roleId',
+			r.role_name as 'role.roleName'
+		from t_user u,t_role r
+		<include refid="queryCondition" />
+		order by u.create_time desc
+		limit ${offset},${limit}
+	</select>
+	
+	<select id="queryAllUsersCount" resultType="int">
+		select count(0) from t_user u,t_role r
+		<include refid="queryCondition" />
+	</select>
+	
+	<!-- 根据用户名查询用户账户信息 -->
+	<select id="queryUserByName" resultType="org.rapp.pojo.account.User" parameterType="java.lang.String">
+		select * from t_user where username=#{username}
+	</select>
+	
+	<!-- 根据用户名查询用户账户信息 -->
+	<select id="queryUserByEmail" resultType="org.rapp.pojo.account.User" parameterType="java.lang.String">
+		select * from t_user where email=#{email}
+	</select>
+	
+	<!-- 新增用户 -->
+	<insert id="insertUser">
+		insert ignore into t_user(username, password, state, role_id, email, create_time)
+		values(#{username}, #{password}, 2, #{roleId}, #{email}, now())
+ 	</insert>
+	
+	<!-- 删除账户 -->
+	<delete id="deleteUser">
+		delete from t_user where username in 
+		<foreach collection="list" item="ac" index="index" open="(" close=")" separator=",">
+            #{ac.username}
+        </foreach>
+	</delete>
+	
+	<update id="updateUser">
+		update t_user set state=#{state} where username=#{username}
+	</update>
+	
+	<update id="updatePassword">
+		update t_user set password=#{password} where username=#{username}
+	</update>
+	
+	
+</mapper>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.ChannelDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 查询渠道列表的条件sql -->
+	<sql id="queryChannelsCondition">
+		<where>
+			1=1
+			<if test="channelNameEn != null and channelNameEn != ''">  
+		       and c.channel_name_en like CONCAT('%',#{channelNameEn},'%')
+		    </if>  
+			<if test="channelNameCh != null and channelNameCh != ''">  
+		       and c.channel_name_ch like CONCAT('%',#{channelNameCh},'%')
+		    </if>  
+			<if test="state != null and state != ''">  
+		       and c.state = #{state}
+		    </if>  
+			<if test="channelId != null and channelId != ''">  
+		       and c.channel_id = #{channelId}
+		    </if>  
+			<if test="createBy != null and createBy != ''">  
+		       and c.create_by = #{createBy}
+		    </if>  
+		</where>
+	</sql>
+	<!-- 根据分页查询渠道列表 -->
+	<select id="listChannels" resultType="org.rapp.pojo.entry.Channel">
+		select *
+		from t_rapp_channel c
+		<include refid="queryChannelsCondition"/>
+		order by create_time desc
+		<if test="offset != null and offset != ''">
+			limit ${offset},${limit}
+		</if>
+	</select>
+	
+	<!-- 根据分页查询渠道列表总数 -->
+	<select id="countChannels" resultType="int">
+		select count(0) from t_rapp_channel c
+		<include refid="queryChannelsCondition"/>
+	</select>
+	
+	<!-- 根据ID查询渠道 -->
+	<select id="queryChannelById" resultType="org.rapp.pojo.entry.Channel">
+		select *
+		from t_rapp_channel c
+		where c.channel_id = #{channelId}
+	</select>
+	
+	<select id="queryChannelByIds" resultType="org.rapp.pojo.entry.Channel">
+		select *
+		from t_rapp_channel c
+		where c.channel_id in
+		<foreach collection="channels" item="c" index="index" open="(" close=")" separator=",">
+            #{c}
+        </foreach>
+	</select>
+	
+	<!-- 根据ID查询JS源码 -->
+	<select id="queryChannelAll" resultType="org.rapp.pojo.entry.Channel">
+		select * from t_rapp_channel where 1=1
+		<if test="createBy != null and createBy != ''">  
+	       and create_by = #{createBy}
+	    </if> 
+	</select>
+	
+	<!-- 新增渠道 -->
+	<insert id="insertChannel">
+		<selectKey keyProperty="channelId" resultType="String" order="BEFORE">
+            select uuid() from dual
+        </selectKey>
+		insert ignore into t_rapp_channel(channel_id, channel_name_en, channel_name_ch, state, code_id, remark, create_by, create_time)
+		values(#{channelId}, #{channelNameEn}, #{channelNameCh}, #{state}, #{codeId}, #{remark}, #{createBy}, #{createTime})
+	</insert>
+	
+	<!-- 删除渠道 -->
+	<delete id="deleteChannel">
+		delete from t_rapp_channel where channel_id in 
+		<foreach collection="list" item="c" index="index" open="(" close=")" separator=",">
+            #{c.channelId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新渠道 -->
+	<update id="updateChannel">
+		update t_rapp_channel 
+		set channel_name_en=#{channelNameEn},
+			channel_name_ch=#{channelNameCh},
+			state=#{state},
+			<if test="codeId != null and codeId != ''">  
+				code_id=#{codeId},
+			</if>
+			remark=#{remark}
+		where channel_id=#{channelId}
+	</update>
+	
+	<select id="showChannelById" resultType="org.rapp.pojo.entry.Channel">
+        select *
+		from t_rapp_channel c
+		where c.channel_id = #{channelId} 
+		<if test="createBy != null and createBy != ''">  
+			and c.create_by = #{createBy}
+	    </if> 
+<!-- 		<if test="createBy == null">   -->
+<!-- 	        select -->
+<!-- 				c.channel_id, -->
+<!-- 				c.channel_name_ch, -->
+<!-- 				c.channel_name_en, -->
+<!-- 				c.state, -->
+<!-- 				c.area_msg, -->
+<!-- 				c.remark, -->
+<!-- 				c.create_time, -->
+<!-- 				c.create_by, -->
+<!-- 				j.code_id 'code.code_id', -->
+<!-- 				j.code_name 'code.code_name', -->
+<!-- 				j.server_ip 'code.server_ip', -->
+<!-- 				j.server_port 'code.server_port', -->
+<!-- 				j.code 'code.code', -->
+<!-- 				j.remark 'code.remark', -->
+<!-- 				j.create_time 'code.create_time' -->
+<!-- 			from t_rapp_channel c,t_rapp_js j  -->
+<!-- 			where c.code_id=j.code_id and c.channel_id = #{channelId} -->
+<!-- 	    </if>  -->
+	</select>
+	
+	<select id="queryMyChannel" resultType="org.rapp.pojo.dto.result.ChannelReuslt">
+		SELECT
+			c.channel_id,
+			c.channel_name_ch AS 'channel_name',
+			c.create_time,
+			count(DISTINCT r.dev_no) AS 'count_router',
+			count(DISTINCT s.dev_no) AS 'online_router',
+			COUNT(DISTINCT l.phone_mac) AS 'connect_phone',
+			COUNT(DISTINCT l.id) AS 'count_push'
+		FROM
+			t_rapp_channel c
+			LEFT JOIN t_rapp_router r ON c.channel_id = r.channel_id
+			LEFT JOIN t_rapi_router_state s ON r.dev_no = s.dev_no
+			AND DATE_FORMAT(s.request_date, '%Y-%m-%d') = #{onlineDate}
+		AND s.type = 1
+		LEFT JOIN t_rapp_advert_push_log l ON l.dev_no = r.dev_no
+		WHERE
+			c.create_by = #{createBy}
+		<if test="keyword != null and keyword != ''">  
+	       and (c.channel_name_en like CONCAT('%',#{keyword},'%') or c.channel_name_ch like CONCAT('%',#{keyword},'%'))
+	    </if>  
+		GROUP BY
+			c.channel_id,
+			c.channel_name_ch,
+			c.create_time
+		ORDER BY
+			count(DISTINCT r.dev_no) DESC
+		limit ${offset},${limit}
+	</select>
+	
+	<!-- 根据广告信息查询渠道信息 -->
+	<select id="selectChannelByAdvertId" parameterType="string" resultType="org.rapp.pojo.entry.Channel">
+		SELECT
+			c.*
+		FROM
+			t_rapp_channel c,
+			t_rapp_advert_channel ac
+		WHERE
+			c.channel_id = ac.channel_id
+		AND ac.advert_id = #{advertId}
+	</select>
+	
+</mapper>

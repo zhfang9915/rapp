@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.AdvertTempDao">
+	
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<sql id="queryAdvertTempCondition">
+		<where>
+ 			1=1
+ 			<if test="state != null and state != ''">  
+		    	and state=#{state}
+		    </if>
+ 			<if test="tempName != null and tempName != ''">
+ 				and temp_name like CONCAT('%',#{tempName},'%')
+ 			</if>
+ 		</where>
+	</sql>
+	
+ 	<!-- 查询广告模版 -->
+ 	<select id="queryAdvertTemps" resultType="org.rapp.pojo.entry.AdvertTemp">
+ 		select * from t_rapp_advert_temp
+ 		<include refid="queryAdvertTempCondition"/>
+ 		order by create_time desc
+		<if test="offset!=null and offset!=''">
+			 limit ${offset},${limit}
+		</if>
+ 	</select>
+ 	
+ 	<!-- 列表总数 -->
+ 	<select id="queryAdvertTempsCount" resultType="int">
+ 		select count(0) from t_rapp_advert_temp
+ 		<include refid="queryAdvertTempCondition"/>
+ 	</select>
+ 	
+ 	<!-- 根据ID查询模板 -->
+ 	<select id="queryAdvertTempById" parameterType="int" resultType="org.rapp.pojo.entry.AdvertTemp">
+ 		select * from t_rapp_advert_temp where temp_id = #{tempId}
+ 	</select>
+ 	
+ 	<!-- 新增模板 -->
+	<insert id="insertAdvertTemp">
+		insert ignore into t_rapp_advert_temp(temp_name, state, is_more, temp, temp_for, temp_js, create_time)
+		values(#{tempName}, #{state}, #{isMore}, #{temp}, #{tempFor}, #{tempJs}, #{createTime})
+	</insert>
+	
+	<!-- 删除模板 -->
+	<delete id="deleteAdvertTemp">
+		delete from t_rapp_advert_temp where temp_id in 
+		<foreach collection="list" item="c" index="index" open="(" close=")" separator=",">
+            #{c.tempId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新模板 -->
+	<update id="updateAdvertTemp">
+		update t_rapp_advert_temp 
+		set temp_name=#{tempName},
+			state=#{state},
+			is_more=#{isMore},
+			temp=#{temp},
+			temp_for=#{tempFor},
+			temp_js=#{tempJs}
+		where temp_id=#{tempId}
+	</update>
+ 	
+</mapper>

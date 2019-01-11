@@ -1,0 +1,37 @@
+var eleImg = document.getElementById('qiao7fonghokcungimg');
+var eleClose = document.getElementById('GGGGGG_ggdata_display_close');
+
+eleClose.onclick = function() {
+	GGGGGG_close_gg_div('GGGGGG_ggdata_display_parent', 2);
+};
+eleImg.onclick = function() {
+	GGGGGG_onclick_gg_div('qiao7fonghokcungimg', 3);
+};
+
+function GGGGGG_close_gg_div(id, state)
+{
+	var element = document.getElementById(id);
+	if (element == null) {
+		return ;
+	}
+	element.style.height = 0;
+	element.style.overflow = 'hidden';
+	element.innerHTML = "";
+	GGGGGG_gg_state_upload(state);
+}
+function GGGGGG_onclick_gg_div(id, state)
+{
+	var element = document.getElementById(id);
+	if (element == null) {
+		return ;
+	}
+	GGGGGG_gg_state_upload(state);
+}
+function GGGGGG_display_gg_div(id, state)
+{
+	var element = document.getElementById(id);
+	if (element == null) {
+		return ;
+	}
+	GGGGGG_gg_state_upload(state);
+}

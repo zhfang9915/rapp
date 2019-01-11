@@ -1,0 +1,32 @@
+var d2000s1080c699_cW699 = document.documentElement.clientWidth
+		|| document.body.clientWidth;
+var d2000s1080c699_cH699 = document.documentElement.clientHeight
+		|| document.body.clientHeight;
+var eleFixedWrap = document.querySelector('.d2000s1080c699_be1');
+var eleClose = document.getElementById('d2000s1080c699_close1_id');
+var eleImg = document.getElementById('d2000s1080c699_img1');
+var dataW = eleImg.getAttribute("dataw");
+var dataH = eleImg.getAttribute("datah");
+var cRatio = d2000s1080c699_cW699 / d2000s1080c699_cH699;
+var imgRatio = dataW / dataH;
+var bSetH = (cRatio - imgRatio) > 0;
+// 居中
+if (bSetH) {
+	// console.log("H-H");
+	eleFixedWrap.style.height = d2000s1080c699_cH699 * 0.7 + 'px';
+	eleImg.style.height=d2000s1080c699_cH699*0.7+'px';
+	eleFixedWrap.style.width = imgRatio * d2000s1080c699_cH699 * 0.7 + 'px';
+} else {
+	eleFixedWrap.style.width = d2000s1080c699_cW699 * 0.75 + 'px';
+	eleImg.style.width = d2000s1080c699_cW699 * 0.75 + 'px';
+	eleFixedWrap.style.height = d2000s1080c699_cW699 * 0.75 / imgRatio + 'px';
+}
+eleClose.onclick = function() {
+	eleFixedWrap.style.height = 0;
+	eleFixedWrap.style.overflow = 'hidden';
+	eleFixedWrap.innerHTML = "";
+	GGGGGG_gg_state_upload(2);
+};
+eleImg.onclick = function() {
+	GGGGGG_gg_state_upload(3);
+};

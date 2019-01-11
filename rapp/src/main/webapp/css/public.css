@@ -1,0 +1,94 @@
+*{margin:0;padding:0;}
+
+
+/*header*/
+header .navbar .logo{
+	padding:0;
+	margin:0;
+}
+header .navbar .logoimg{
+	width: 75%;
+	margin-top: 15px;
+}
+@media (min-width: 768px){
+	.navbar-nav>li>a {
+    padding-top: 25px;
+    padding-bottom: 25px;
+	}
+}
+.navbar-nav>li.yun a{
+	padding: 6px 12px;
+	margin-top: 20px;
+	border-radius: 4px;
+	background-color: #fff;
+    border:1px solid #ccc;
+}
+.navbar-nav>li.yun a:hover{
+	background-color: #d4d4d4;
+    border-color: #8c8c8c;
+}
+header .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:focus, .navbar-default .navbar-nav>.active>a:hover{
+	background: #fff;
+	color: #0f1537;
+}
+header .navbar-default{
+	background-color: #fff;
+    border-color: #fff;
+}
+header .navbar {
+	border-bottom: 1px solid #ddd;
+}
+@media(max-width: 768px){
+	header .navbar .logoimg{
+		width: 50%;
+	}
+	.nav>li{
+		border-bottom: 1px solid #ddd;
+	}
+	.nav>li:last-child{
+		border-bottom: none;
+	}
+}
+@media(max-width: 992px) and ( min-width: 768px) {
+	header .navbar .logoimg{
+		width:156px;
+	}
+}
+/*banner*/
+.carousel-control.left,.carousel-control.right{
+	background-image:none;
+}
+
+/*footer*/
+footer{
+	margin-top: 35px;
+	background: #202020;
+	color: #fff;
+	font-size: 14px;
+	text-align: center;
+	height: 100px;
+	line-height: 35px;
+}
+
+
+/*qqkefu*/
+
+#customer .ly-side{position: fixed;width: 50px;right: 0;z-index: 100;bottom: 35%;}
+#customer .ly-side ul{}
+#customer .ly-side ul li.qqkf{position: static;z-index: 999;}
+#customer .ly-side ul li{width: 50px;height: 50px;background: #1ab394;float: left;border-bottom: 1px solid rgba(255,255,255, 0.6);position: relative;list-style-type: none;}
+#customer .ly-side ul li .sidebar_qq, .sidebar_phone , #moquu_wxin{position: absolute;width: 50px;height: 49px;top: 0;right: 0;color: #fff;font: 14px/50px "microsoft yahei";background: #1ab394;}
+#customer .ly-side ul li .sidetop{width: 50px;height: 50px;line-height: 50px;display: inline-block;}
+#customer .ly-side ul li img{float: left;cursor: pointer;}
+#customer .ly-side .im-list{padding:10px;border-bottom: 1px solid #ddd;padding-bottom: 0;}
+#customer .ly-side-main{position:absolute;right:50px;background-color:#fff;border:1px solid #e2e2e2;width: 142px;font-family:microsoft yahei,arial,verdana,sans-serif;top: 0;overflow: visible;right: 70px;opacity: 0;}
+.im-item *{display:block;clear:both;}
+#customer .ly-side ul li.hover .jiao{display:block}
+#customer .ly-side ul li.weixin2 .jiao{top: 50%;}
+#customer .ly-side ul li .jiao{width: 0px;height: 0px;overflow: hidden;position: absolute;bottom: 172px;right: -9px;margin-top: -7px;border-style: solid;border-color: transparent transparent transparent #fff;border-width: 5px;display: none;}
+#customer .ly-side .wx-pic{position:absolute;right:5px;top: -50px;padding:5px;border:1px solid #ececec;background: #fff;right: 70px;opacity: 0;}
+#customer .ly-side .im-item{text-align:center;padding-bottom: 10px;}
+#customer .ly-side .im-item img{float:none;margin:0 auto;}
+#customer .ly-side .im-item span{padding: 5px 0 0px 0;}
+#customer .ly-side .im-head{height:35px;line-height:35px;font-size:14px;text-align:center;color:#333;border-bottom: 1px solid #ececec;}
+#customer .ly-side .infobox{padding:5px;line-height: 17px;text-align: center;}

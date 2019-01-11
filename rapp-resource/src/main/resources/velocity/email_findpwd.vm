@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>email</title>
+		<style type="text/css">
+			body{
+				font-family: "微软雅黑";
+				font-size: 14px;
+				padding: 0;
+				margin: 0;
+			}
+			h2,p,img{
+				padding: 0;
+				margin: 0;
+				border: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="email-content" style="margin: 5px auto; width: 98%; overflow: hidden;border: 1px solid #ddd;">
+			<div class="logo"><a href="http://www.qcwifi.ltd"><img width="120" src="http://www.qcwifi.ltd/img/login/qclogo3.png"/></a></div>
+		
+			
+			<div class="content" style="width:100%; padding:20px;">
+				<p class="caption" style="line-height: 24px;">尊敬的前辰用户：</p>
+				<p class="intro" style="text-indent: 2em; line-height: 24px;">您好！感谢您使用前辰无线运营云平台。</p>
+				<p class="intro" style="text-indent: 2em; line-height: 24px;">您的登录用户名为 <strong style="color:#d87832;">$!{ef.username}</strong> </p>				
+				<p class="intro" style="text-indent: 2em; line-height: 24px;">系统为您重置的密码为 <strong style="color:#d87832;">$!{ef.newPwd}</strong> </p>				
+				<br/><br/>
+				<p style="text-align: center; padding: 15px 0;"><a href="$!{ef.loginUrl}" style="display: inline-block; padding: 8px 30px; line-height: 18px;background: #d87832;text-decoration: none; color: #fff;">去登录</a></p>
+				
+			</div>
+			<div class="footer" style="width: 100%; background: #f5f5f5; padding: 20px;margin-top: 30px;">
+				
+				<p style="line-height: 24px;text-align: center;"><span>前辰科技:</span><a href="http://www.qcwifi.ltd" style="padding-left: 10px; text-decoration: none;">www.qcwifi.ltd</a></p>
+				<p class="statement" style="padding-top: 20px; line-height: 24px;text-align: center;">系统邮件请不要回复哦，感谢您对前辰科技的信任与支持!</p>
+			</div>
+		</div>
+	</body>
+</html>

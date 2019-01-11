@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.RoleAuthDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 查询权限列表的条件sql -->
+	<sql id="queryAuthsCondition">
+		<where>
+			<if test="authName != null and authName != ''">  
+		       auth_name like CONCAT('%',#{authName},'%')
+		    </if>  
+		</where>
+	</sql>
+	<!-- 根据分页查询权限列表 -->
+	<select id="queryAuths" resultType="org.rapp.pojo.account.Auth">
+		select * from t_auth
+		<include refid="queryAuthsCondition"/>
+		order by create_time desc
+		limit ${offset},${limit}
+	</select>
+	
+	<!-- 根据分页查询权限列表 -->
+	<select id="queryAuthsCount" resultType="int">
+		select count(0) from t_auth
+		<include refid="queryAuthsCondition"/>
+	</select>
+	
+	<!-- 新增权限 -->
+	<insert id="insertAuth">
+		insert ignore into t_auth(auth_name, request_url, create_time)
+		values(#{authName}, #{requestUrl}, now())
+	</insert>
+	
+	<!-- 删除权限 -->
+	<delete id="deleteAuth">
+		delete from t_auth where auth_id in 
+		<foreach collection="list" item="a" index="index" open="(" close=")" separator=",">
+            #{a.authId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新权限 -->
+	<update id="updateAuth">
+		update t_auth set auth_name=#{authName},request_url=#{requestUrl} where auth_id=#{authId}
+	</update>
+	
+	
+	
+	<!-- 查询权限列表的条件sql -->
+	<sql id="queryRolesCondition">
+		<where>
+			<if test="roleName != null and roleName != ''">  
+		       role_name like CONCAT('%',#{roleName},'%')
+		    </if>  
+		</where>
+	</sql>
+	<!-- 根据分页查询权限列表 -->
+	<select id="queryRoles" resultType="org.rapp.pojo.account.Role">
+		select * from t_role
+		<include refid="queryRolesCondition"/>
+		order by create_time desc
+		<if test="offset != null and offset != ''"> 
+			limit ${offset},${limit}
+		</if> 
+	</select>
+	
+	<!-- 根据分页查询权限列表 -->
+	<select id="queryRolesCount" resultType="int">
+		select count(0) from t_role
+		<include refid="queryRolesCondition"/>
+	</select>
+	
+	<!-- 根据ID茶选角色 -->
+	<select id="queryRoleById" resultType="org.rapp.pojo.account.Role">
+		select * from t_role where role_id = #{roleId}
+	</select>
+	 
+	<!-- 新增权限 -->
+	<insert id="insertRole">
+		insert ignore into t_role(role_name, menu, advert_max, create_time)
+		values(#{roleName}, #{menu}, #{advertMax}, now())
+	</insert>
+	
+	<!-- 删除权限 -->
+	<delete id="deleteRole">
+		delete from t_role where role_id in 
+		<foreach collection="list" item="r" index="index" open="(" close=")" separator=",">
+            #{r.roleId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新权限 -->
+	<update id="updateRole">
+		update t_role set role_name=#{roleName},menu=#{menu},advert_max=#{advertMax} 
+		where role_id=#{roleId}
+	</update>
+	
+	<!-- 查询已有/未有权限 -->
+	<select id="existOrOptionalAuths" resultType="org.rapp.pojo.account.Auth">
+		select a.* from t_auth a
+		where 
+		<if test="authName != null and authName != ''">  
+	       a.auth_name like CONCAT('%',#{authName},'%') and
+	    </if>
+		a.auth_id 
+		<if test="selectType == 'exist'">  
+			in
+	    </if>  
+		<if test="selectType == 'optional'">  
+			not in
+	    </if> 
+		(
+		  select t.auth_id from t_role_auth t
+		  where t.role_id = #{roleId}
+		)
+		
+	</select>
+	
+	<!-- 移除角色的权限 -->
+	<delete id="removeAuthFromRole">
+		delete from t_role_auth where role_id = #{roleId} and auth_id in
+		<foreach collection="list" item="a" index="index" open="(" close=")" separator=",">
+			#{a.authId}
+        </foreach>
+	</delete>
+	
+	<!-- 为角色授权 -->
+	<insert id="addAuthToRole">
+		insert into t_role_auth(role_id,auth_id,create_time) values
+		<foreach collection="list" item="a" index="index" open="" close="" separator=",">
+			(#{roleId},#{a.authId},now())
+        </foreach>
+	</insert>
+	
+	
+	
+
+	<!-- 根据角色ID查询该角色所有的权限 -->
+	<select id="queryAuthsByRoleId" parameterType="int" resultType="org.rapp.pojo.account.Auth">
+		select a.* from t_auth a,t_role_auth ra
+		where ra.auth_id=a.auth_id and ra.role_id = #{roleId}
+	</select>
+	
+</mapper>

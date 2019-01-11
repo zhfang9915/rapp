@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.PluginUnitDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 查询插件列表的条件sql -->
+	<sql id="queryPluginUnitsCondition">
+		<where>
+			<if test="pluginId != null and pluginId != ''">  
+		       and plugin_id=#{pluginId}
+		    </if>  
+			<if test="pluginName != null and pluginName != ''">  
+		       and plugin_name like CONCAT('%',#{pluginName},'%')
+		    </if>  
+		</where>
+	</sql>
+	<!-- 根据分页查询插件列表 -->
+	<select id="listPluginUnits" resultType="org.rapp.pojo.entry.PluginUnit">
+		select p.*
+		from t_rapp_plugin p
+		<include refid="queryPluginUnitsCondition"/>
+		order by create_time desc
+		<if test="offset != null and offset != ''">  
+			limit ${offset},${limit}
+	    </if> 
+	</select>
+	
+	<!-- 根据分页查询插件列表总数 -->
+	<select id="countPluginUnits" resultType="int">
+		select count(0) from t_rapp_plugin p
+		<include refid="queryPluginUnitsCondition"/>
+	</select>
+	
+	<!-- 根据ID查询插件 -->
+	<select id="queryPluginUnitById" resultType="org.rapp.pojo.entry.PluginUnit">
+		select 
+			p.*
+<!-- 			f.fw_id 'fw.fwId', -->
+<!-- 			f.version 'fw.version', -->
+<!-- 			f.fw_name 'fw.fwName', -->
+<!-- 			f.openwrt 'fw.openwrt', -->
+<!-- 			f.crossstool 'fw.crossstool' -->
+		from t_rapp_plugin p
+<!-- 		,t_rapp_firmware f -->
+		where plugin_id = #{pluginId}
+	</select>
+	
+	<!-- 根据交叉编译版本查询插件 -->
+	<select id="queryPluginUnitByCrossstool" resultType="org.rapp.pojo.entry.PluginUnit">
+		select *
+		from t_rapp_plugin
+		where crossstool = #{crossstool}
+	</select>
+	
+	<!-- 根据MD5查询插件 -->
+	<select id="queryPluginUnitByMD5" resultType="org.rapp.pojo.entry.PluginUnit">
+		select * from t_rapp_plugin where md5 = #{md5}
+	</select>
+	
+	<!-- 根据ID查询插件 -->
+	<select id="queryPluginUnitAll" resultType="org.rapp.pojo.entry.PluginUnit">
+		select * from t_rapp_plugin
+	</select>
+	
+	<!-- 新增插件 -->
+	<insert id="insertPluginUnit">
+		<selectKey keyProperty="pluginId" resultType="String" order="BEFORE">
+            select uuid() from dual
+        </selectKey>
+		insert ignore into t_rapp_plugin(plugin_id, plugin_name, version, crossstool, plugin_path, download_url, md5, state, remark, create_time)
+		values(#{pluginId}, #{pluginName}, #{version}, #{crossstool}, #{pluginPath}, #{downloadUrl}, #{md5}, #{state}, #{remark}, #{createTime})
+	</insert>
+	
+	<!-- 删除插件 -->
+	<delete id="deletePluginUnit">
+		delete from t_rapp_plugin where plugin_id in 
+		<foreach collection="list" item="p" index="index" open="(" close=")" separator=",">
+            #{p.pluginId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新插件 -->
+	<update id="updatePluginUnit">
+		update t_rapp_plugin 
+		set plugin_name=#{pluginName},
+			version=#{version},
+			state=#{state},
+			crossstool=#{crossstool},
+			remark=#{remark}
+		where plugin_id=#{pluginId}
+	</update>
+	
+	
+	
+</mapper>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.FirmWareDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 查询固件列表的条件sql -->
+	<sql id="queryFirmWaresCondition">
+		<where>
+			1=1
+			<if test="fwId != null and fwId != ''">  
+		       and fw_id=#{fwId}
+		    </if>  
+			<if test="version != null and version != ''">  
+		       and version=#{version}
+		    </if>  
+			<if test="fwName != null and fwName != ''">  
+		       and fw_name like CONCAT('%',#{fwName},'%')
+		    </if>  
+		</where>
+	</sql>
+	<!-- 根据分页查询固件列表 -->
+	<select id="listFirmWares" resultType="org.rapp.pojo.entry.FirmWare">
+		select * from t_rapp_firmware
+		<include refid="queryFirmWaresCondition"/>
+		order by create_time desc
+		<if test="offset != null and offset != ''">  
+			limit ${offset},${limit}
+	    </if> 
+	</select>
+	
+	<!-- 根据分页查询固件列表总数 -->
+	<select id="countFirmWares" resultType="int">
+		select count(0) from t_rapp_firmware
+		<include refid="queryFirmWaresCondition"/>
+	</select>
+	
+	<!-- 根据ID查询固件 -->
+	<select id="queryFirmWareById" resultType="org.rapp.pojo.entry.FirmWare">
+		select * from t_rapp_firmware where fw_id = #{fwId}
+	</select>
+	
+	<!-- 查询所有插件 -->
+	<select id="queryFirmWareAll" resultType="org.rapp.pojo.entry.FirmWare">
+		select * from t_rapp_firmware f
+	</select>
+	<select id="queryFirmWareDownload" resultType="org.rapp.pojo.entry.FirmWare">
+		SELECT
+			t.fw_id,
+			t.fw_name,
+			t.version,
+			t.remark,
+			t.create_time
+		FROM
+			t_rapp_firmware t,
+			(
+				SELECT
+					f.fw_name,
+					MAX(f.create_time) AS new_time
+				FROM
+					t_rapp_firmware f
+				GROUP BY
+					f.fw_name
+			) t1
+		WHERE
+			t.fw_name = t1.fw_name
+		AND t.create_time = t1.new_time
+		ORDER BY t.create_time desc
+	</select>
+	
+	<!-- 新增固件 -->
+	<insert id="insertFirmWare">
+		<selectKey keyProperty="fwId" resultType="String" order="BEFORE">
+            select uuid() from dual
+        </selectKey>
+		insert ignore into t_rapp_firmware(fw_id, fw_name, fw_path, version, openwrt, crossstool, flash_course, remark, create_time)
+		values(#{fwId}, #{fwName}, #{fwPath}, #{version}, #{openwrt}, #{crossstool}, #{flashCourse}, #{remark}, #{createTime})
+	</insert>
+	
+	<!-- 删除固件 -->
+	<delete id="deleteFirmWare">
+		delete from t_rapp_firmware where fw_id in 
+		<foreach collection="list" item="f" index="index" open="(" close=")" separator=",">
+            #{f.fwId}
+        </foreach>
+	</delete>
+	
+	<!-- 更新固件 -->
+	<update id="updateFirmWare">
+		update t_rapp_firmware 
+		set fw_name=#{fwName},
+			version=#{version},
+			openwrt=#{openwrt},
+			crossstool=#{crossstool},
+			flash_course=#{flashCourse},
+			remark=#{remark}
+		where fw_id=#{fwId}
+	</update>
+	
+	
+	
+</mapper>

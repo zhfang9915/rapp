@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.wifi.WifiSpyDao">
+
+	
+	<!-- 保存WIFI侦探路由器信息 -->
+	<insert id="saveSpy">
+		<selectKey keyProperty="spyId" resultType="String" order="BEFORE">
+            select uuid() from dual
+        </selectKey>
+		insert ignore into t_wifi_spy(spy_id, fcs, mark, dev_id, dev_mac)
+		values(#{spyId}, #{fcs}, #{mark}, #{devId}, #{devMac}, now())
+	</insert>
+	
+	
+	<!-- 保存WIFI侦探客户信息 -->
+	<insert id="saveSpyDatas">
+		<selectKey keyProperty="fd.dataId" resultType="String" order="BEFORE">
+            select uuid() from dual
+        </selectKey>
+		insert into t_wifi_data(data_id, spyId, sta_mac, ap_mac, ss_id, pwr, channel, create_time) values
+		<foreach collection="list" item="d" index="index" open="" close="" separator=",">
+			
+			(#{d.dataId}, #{spyId}, #{d.staMac}, #{d.apMac}, #{d.ssId}, #{d.pwr}, #{d.channel}, now())
+        </foreach>
+	</insert>
+	
+	<select id="querySpy" resultType="org.rapp.pojo.wifi.WifiSpy">
+		select * from t_wifi_spy
+		order by create_time desc
+		limit ${offset},${limit}
+	</select>
+	<select id="querySpyCount" resultType="int">
+		select count(0) from t_wifi_spy
+	</select>
+	
+	<select id="querySpyDataBySpyId" resultType="org.rapp.pojo.wifi.FrameData">
+		select * from t_wifi_data
+		where spy_id = #{spyId}
+		order by create_time desc
+		limit ${offset},${limit}
+	</select>
+	<select id="querySpyDataBySpyIdCount" resultType="int">
+		select count(0) from t_wifi_data
+		where spy_id = #{spyId}
+	</select>
+	
+</mapper>

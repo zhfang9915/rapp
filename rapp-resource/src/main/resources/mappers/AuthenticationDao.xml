@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.AuthenticationDao">
+	
+<!-- 	<cache type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/> -->
+
+	
+	<!-- 保存认证流水信息 -->
+	<insert id="insertWechatAuthLog" parameterType="org.rapp.pojo.entry.authentication.wechat.WechatAuthLog">
+		insert into t_rapp_auth_wechat_log(id, gw, port, dev_no, ip, mac, mobile_name, url, auth_time,ssid,bssid)
+		values (#{id}, #{gw}, #{port}, #{devNo}, #{ip}, #{mac}, #{mobileName}, #{url}, now(),#{ssid},#{bssid})
+	</insert>
+	
+	<!-- 根据流水ID获取认证流水信息 -->
+	<select id="queryWechatAuthLogById" resultType="org.rapp.pojo.entry.authentication.wechat.WechatAuthLog">
+		select * from t_rapp_auth_wechat_log where id=#{id}
+	</select>
+	
+	
+	<!-- 保存商户渠道授权的微信公众号信息 -->
+	<insert id="insertWechatAuth" parameterType="org.rapp.pojo.entry.authentication.wechat.WechatAuth">
+		insert into t_rapp_auth_wechat(channel_id, app_id, shop_id, create_date)
+		values (#{channelId}, #{appId}, #{shopId}, now())
+	</insert>
+	
+	<!-- 根据渠道查询微信公众号信息 -->
+	<select id="queryWechatAuthByChannelId" resultType="org.rapp.pojo.entry.authentication.wechat.WechatAuth">
+		select * from t_rapp_auth_wechat where channel_id=#{channelId}
+	</select>
+	
+	<!-- 根据ID更新门店的secretKey -->
+	<update id="updateSecretKeyById" parameterType="org.rapp.pojo.entry.authentication.wechat.WechatAuth">
+		update t_rapp_auth_wechat set secret_key=#{secretKey} where id=#{id}
+	</update>
+		
+</mapper>

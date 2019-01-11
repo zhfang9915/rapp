@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.ApiDao">
+
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+	
+	<!-- 记录请求 -->
+	<insert id="insertRouterState">
+		insert ignore into t_rapi_router_state(
+			dev_no,
+			request_date,
+			type
+		)
+		values(
+			#{devNo}, 
+			#{requestDate},
+			#{type}
+		)
+ 	</insert>
+ 	
+ 	<!-- 统计在线或者活跃设备数 -->
+ 	<select id="statisticalOnlineOrActive" resultType="java.lang.Integer">
+ 		SELECT
+			COUNT(DISTINCT t.dev_no)
+		FROM
+			t_rapi_router_state t,
+			t_rapp_router r
+		WHERE
+			r.dev_no = t.dev_no
+		AND DATE_FORMAT(t.request_date, '%Y-%m-%d') = #{statisticalDate}
+		AND t.type = #{type}
+		and r.create_by=#{createBy}
+		GROUP BY DATE_FORMAT(t.request_date, '%Y-%m-%d')
+ 	</select>
+ 	
+</mapper>

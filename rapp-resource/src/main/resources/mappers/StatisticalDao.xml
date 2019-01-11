@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.rapp.repository.StatisticalDao">
+	
+	<cache eviction="LRU" type="org.rapp.comm.redis.cache.RedisCache" flushInterval="300000"/>
+
+ 	<!-- 广告点击量统计,默认查询总量 -->
+ 	<select id="statisticalAdvertByAdvert" resultType="org.rapp.pojo.statistical.AdvertStatistical">
+ 		select a.advert_name 'name',COUNT(p.id) 'pushCount',count(l.id) 'clickCount'
+		from t_rapp_advert a
+		LEFT join t_rapp_advert_push_log p on a.advert_id=p.advert_id
+		LEFT JOIN t_rapp_advert_upload_log l on p.id=l.logid
+		where 1=1
+		<if test="createBy != null and createBy != ''">  
+			and a.create_by=#{createBy}
+		</if>
+		<if test="advertName != null and advertName != ''">  
+			and a.advert_name=#{advertName}
+		</if>
+		<if test="startTime != null and endTime != ''">  
+	       <![CDATA[
+		       and DATE_FORMAT(p.push_time,'%Y-%m-%d') >= #{startTime} 
+		       and DATE_FORMAT(p.push_time,'%Y-%m-%d') <= #{endTime}
+	       ]]>
+	    </if>  
+		GROUP BY a.advert_id
+ 	</select>
+ 	
+<!--  	<select id="statisticalAdvertDays" resultType="org.rapp.pojo.statistical.AdvertStatistical"> -->
+<!--  		select DATE_FORMAT(p.push_time,'%Y-%m-%d') 'name',COUNT(p.id) 'pushCount',count(l.id) 'clickCount' -->
+<!-- 		from t_rapp_advert a -->
+<!-- 		right join t_rapp_advert_push_log p on a.advert_id=p.advert_id -->
+<!-- 		LEFT JOIN t_rapp_advert_upload_log l on p.id=l.logid -->
+<!-- 		<where> -->
+<!-- 			1=1 -->
+<!-- 			<if test="createBy != null and createBy != ''">   -->
+<!-- 				and a.create_by=#{createBy} -->
+<!-- 			</if> -->
+<!-- 			<if test="advertId != null and advertId != ''">   -->
+<!-- 				and a.advert_id=#{advertId} -->
+<!-- 			</if> -->
+<!-- 		</where> -->
+<!-- 		GROUP BY DATE_FORMAT(p.push_time,'%Y-%m-%d') -->
+<!-- 		order by DATE_FORMAT(p.push_time,'%Y-%m-%d') DESC -->
+<!-- 		limit 0,15 -->
+<!--  	</select> -->
+ 	
+ 	
+ 	<!-- 广告当前推送情况 -->
+<!--  	<select id="pushAdvertByHours" resultType="org.rapp.pojo.statistical.AdvertStatistical"> -->
+<!--  		select DATE_FORMAT(p.push_time,'%H') 'name',COUNT(p.id) 'pushCount',count(l.id) 'clickCount' -->
+<!-- 		from t_rapp_advert_push_log p -->
+<!-- 		LEFT JOIN t_rapp_advert_upload_log l on p.id=l.logid -->
+<!-- 		<where> -->
+<!-- 			to_days(p.push_time) = to_days(#{pushTime}) -->
+<!-- 			<if test="createBy != null and createBy != ''">   -->
+<!-- 				and a.create_by=#{createBy} -->
+<!-- 			</if> -->
+<!-- 			<if test="advertId != null and advertId != ''">   -->
+<!-- 				and p.advert_id=#{advertId} -->
+<!-- 			</if> -->
+<!-- 		</where> -->
+<!-- 		GROUP BY DATE_FORMAT(p.push_time,'%H') -->
+<!-- 		order by DATE_FORMAT(p.push_time,'%H') DESC -->
+<!-- 		limit 0,15 -->
+<!--  	</select> -->
+ 	
+ 	<!-- 统计每个广告的推送量 -->
+ 	<select id="statisticalAdvertByDate" resultType="org.rapp.pojo.statistical.AdvertStatistical">
+		SELECT
+			DATE_FORMAT(p.push_time, #{statisticalType}) 'name',
+			COUNT(p.id) 'pushCount',
+			count(l.id) 'clickCount'
+		FROM
+			t_rapp_advert a 
+		LEFT JOIN t_rapp_advert_push_log p on a.advert_id=p.advert_id
+		LEFT JOIN t_rapp_advert_upload_log l ON p.id = l.logid
+		<where>
+			1=1
+			<if test="createBy != null and createBy != ''">  
+				and a.create_by=#{createBy}
+			</if>
+			<if test="advertId != null and advertId != ''">  
+				and a.advert_id = #{advertId}
+			</if>
+			<if test="startTime != null and endTime != ''">  
+		       <![CDATA[
+			       and DATE_FORMAT(p.push_time,#{whereType}) >= #{startTime}
+			       and DATE_FORMAT(p.push_time,#{whereType}) <= #{endTime}
+		       ]]>
+		    </if>  
+			<if test="pushTime != null and pushTime != ''">  
+			    and DATE_FORMAT(p.push_time,#{whereType}) = #{pushTime}
+		    </if>  
+		</where>
+		GROUP BY
+			DATE_FORMAT(p.push_time, #{statisticalType})
+		ORDER BY
+			DATE_FORMAT(p.push_time, #{statisticalType})
+ 	</select>
+ 	
+ 	
+ 	<!-- 统计每个路由器的广告推送量 -->
+ 	<select id="statisticalRouterByDate" resultType="org.rapp.pojo.statistical.AdvertStatistical">
+		SELECT
+			DATE_FORMAT(p.push_time, #{statisticalType}) 'name',
+			COUNT(p.id) 'pushCount',
+			count(l.id) 'clickCount'
+		FROM
+			t_rapp_router r 
+		LEFT JOIN t_rapp_advert_push_log p on r.dev_no=p.dev_no
+		LEFT JOIN t_rapp_advert_upload_log l ON p.id = l.logid
+		<where>
+			1=1
+			<if test="devNo != null and devNo != ''">  
+				and r.dev_no = #{devNo}
+			</if>
+			<if test="createBy != null and createBy != ''">  
+				and r.create_by=#{createBy}
+			</if>
+			<if test="pushTime != null and pushTime != ''"> 
+				AND DATE_FORMAT(p.push_time,#{whereType}) = #{pushTime}
+			</if>
+			<if test="startTime != null and endTime != ''">  
+		       <![CDATA[
+			       and DATE_FORMAT(p.push_time,#{whereType}) >= #{startTime}
+			       and DATE_FORMAT(p.push_time,#{whereType}) <= #{endTime}
+		       ]]>
+		    </if>  
+		</where>
+		GROUP BY
+			DATE_FORMAT(p.push_time, #{statisticalType})
+		ORDER BY
+			DATE_FORMAT(p.push_time, #{statisticalType})
+ 	</select>
+ 	
+</mapper>
